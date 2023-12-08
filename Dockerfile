@@ -1,16 +1,21 @@
-# Use the Alpine Linux base image
+#FROM alpine
 FROM arm64v8/alpine
-#FROM alpine:latest
 
-RUN apk update && \
-    apk add --no-cache nginx
+RUN apk --no-cache add --virtual builds-deps build-base python3
+RUN apk --no-cache add --update npm
 
-COPY nginx.conf /etc/nginx/nginx.conf
+# Setup project structure
+COPY public /app/public
+COPY views /app/views
+COPY package.json /app/package.json
+COPY package-lock.json /app/package-lock.json
+COPY server.js /app/server.js
+WORKDIR /app
 
-COPY icon.jpeg /usr/share/nginx/html/
-COPY index.html /usr/share/nginx/html/
-COPY styles.css /usr/share/nginx/html/
+# Build project code (in the image itself)
+RUN npm ci
 
 EXPOSE 80
 
-CMD ["nginx", "-g", "daemon off;"]
+# Run app
+CMD npm run prod
